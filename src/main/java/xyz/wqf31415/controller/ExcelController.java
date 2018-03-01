@@ -7,11 +7,17 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.CellType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import xyz.wqf31415.entity.Student;
 
+import javax.servlet.ServletInputStream;
 import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -109,4 +115,34 @@ public class ExcelController {
         out.close();
     }
 
+    /**
+     * 上传 Excel 文件，程序读取内容后以字符串形式返回
+     *
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    @RequestMapping("/upload")
+    public String uploadExcelFile(MultipartFile file) throws IOException {
+        String result = "";
+        InputStream stream = file.getInputStream();
+        HSSFWorkbook workbook = new HSSFWorkbook(stream);
+        HSSFSheet sheet = workbook.getSheetAt(0);
+        // 获取最后一行的索引
+        int rowNum = sheet.getLastRowNum();
+        for (int i = 0; i <= rowNum; i++){
+            HSSFRow row = sheet.getRow(i);
+            // 获取单元格数量，即最后一个单元格索引+1
+            int cellNum = row.getLastCellNum();
+            for (int j = 0; j < cellNum; j++){
+                HSSFCell cell = row.getCell(j);
+                if (cell != null) {
+                    result += cell.getStringCellValue() + "\t";
+                }
+            }
+            result += "\n";
+        }
+        System.out.println(result);
+        return result;
+    }
 }

@@ -5,7 +5,14 @@
     <title>SpringBoot & POI 导出Excel</title>
 </head>
 <body>
+<h3>导出文件</h3>
 <a href="/excel/download">导出Excel</a><br/>
-<a href="/excel/students">从对象列表导出Excel</a>
+<a href="/excel/students">从对象列表导出Excel</a><br/>
+<hr>
+<h3>导入文件</h3>
+<form action="/excel/upload" method="post" enctype="multipart/form-data">
+    选择文件：<input type="file" name="file"/><br>
+    <input type="submit" value="提交"/>
+</form>
 </body>
 </html>
