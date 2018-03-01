@@ -11,3 +11,6 @@
 从对象列表导出学生名单：http://localhost:8888/excel/students
 
 ## Excel 文件导入
+[进入首页](http://localhost:8888)，选择本地Excel 文件后，点击提交。
+
+## 导入学生名单，解析后返回 json

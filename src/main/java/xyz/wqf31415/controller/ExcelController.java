@@ -5,6 +5,8 @@ import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.CellType;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -67,7 +69,7 @@ public class ExcelController {
     }
 
     /**
-     * 将实体List导出为Excel
+     * 将实体List导出为 Excel
      *
      * @param response
      * @throws NoSuchFieldException
@@ -105,7 +107,7 @@ public class ExcelController {
             }
         }
 
-        // 导入excel
+        // 导出 excel
         String excelFileName = "student.xls";
         ServletOutputStream out = response.getOutputStream();
         response.reset();
@@ -144,5 +146,32 @@ public class ExcelController {
         }
         System.out.println(result);
         return result;
+    }
+
+    /**
+     * 导入学生名单，解析数据后以 json 格式返回
+     *
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    @RequestMapping("/upload-students")
+    public String uploadStudents(MultipartFile file) throws IOException {
+        InputStream stream = file.getInputStream();
+        HSSFWorkbook workbook = new HSSFWorkbook(stream);
+        HSSFSheet sheet = workbook.getSheetAt(0);
+        int rowNum = sheet.getLastRowNum();
+        JSONArray array = new JSONArray();
+        for (int i = 1; i <= rowNum; i++){
+            HSSFRow row = sheet.getRow(i);
+            Student student = new Student();
+            // 第一行是表头，从第二行开始是学生信息
+            student.setName(row.getCell(0).getStringCellValue());
+            student.setAge(Integer.parseInt(row.getCell(1).getStringCellValue()));
+            student.setGender(row.getCell(2).getStringCellValue());
+            JSONObject jsonObject = new JSONObject(student);
+            array.put(jsonObject);
+        }
+        return array.toString();
     }
 }
