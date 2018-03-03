@@ -6,19 +6,30 @@
 </head>
 <body>
 <h3>导出文件</h3>
-<a href="/excel/download">导出Excel</a><br/>
-<a href="/excel/students">从对象列表导出Excel</a><br/>
+<a href="/excel/create-xls">创建Excel 97-2003 文件</a><br/>
+<a href="/excel/students">从对象列表导出Excel xls</a><br/>
 <hr>
-<h3>导入文件</h3>
-<form action="/excel/upload" method="post" enctype="multipart/form-data">
+<h3>上传xls文件</h3>
+<form action="/excel/upload-parse" method="post" enctype="multipart/form-data">
     选择文件：<input type="file" name="file"/><br>
     <input type="submit" value="提交"/>
 </form>
-
-<h3>解析学生名单</h3>
+<hr>
+<h3>解析学生名单xls</h3>
+<a href="/excel/students">下载学生名单</a><br/>
 <form action="/excel/upload-students" method="post" enctype="multipart/form-data">
     选择学生名单文件：<input type="file" name="file"/><br>
     <input type="submit" value="提交" />
 </form>
+<hr>
+<h3>创建xlsx文件</h3>
+<a href="/excel/create-xlsx">创建xlsx文件</a>
+<hr>
+<h3>解析xlsx</h3>
+<form action="/excel/open-xlsx" method="post" enctype="multipart/form-data">
+    选择xlsx文件：<input type="file" name="file"/><br>
+    <input type="submit" value="提交" />
+</form>
+<hr>
 </body>
 </html>

@@ -1,10 +1,9 @@
 package xyz.wqf31415.controller;
 
-import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.hssf.usermodel.*;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.WorkbookUtil;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,16 +11,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import xyz.wqf31415.entity.Student;
 
-import javax.servlet.ServletInputStream;
 import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -38,21 +34,45 @@ public class ExcelController {
      *
      * @param response
      */
-    @RequestMapping("/download")
+    @RequestMapping("/create-xls")
     public void download(HttpServletResponse response){
         HSSFWorkbook workbook = new HSSFWorkbook();
-        HSSFSheet sheet = workbook.createSheet("sheet0");
+        CreationHelper creationHelper = workbook.getCreationHelper();
+        // Excel 表格的工作表名称长度不能超过31个字符，不能包含 0x000 0x003 : \ * / ? : [ ]
+        // 可以用 POI 提供的工具类创建正确的工作表名，非法字符将被替换成空格，以下代码将返回 s h e e t 1
+        String sheetName = WorkbookUtil.createSafeSheetName("[s/h*e:e?t\\1]");
+        System.out.println("sheetName:"+sheetName);
+        HSSFSheet sheet = workbook.createSheet(sheetName);
         HSSFRow row0 = sheet.createRow(0);
         row0.createCell(0).setCellValue("姓名");
         row0.createCell(1).setCellValue("年龄");
         row0.createCell(2).setCellValue("性别");
         row0.createCell(3).setCellValue("电话");
 
+        RichTextString richTextString = creationHelper.createRichTextString("Date日期");
+        row0.createCell(4).setCellValue(richTextString);
+
+        row0.createCell(5).setCellValue("Calendar日期");
+        row0.createCell(6).setCellValue("单元格类型");
+
         HSSFRow row1 = sheet.createRow(1);
         row1.createCell(0).setCellValue("张三");
         row1.createCell(1).setCellValue(18);
         row1.createCell(2).setCellValue("男");
         row1.createCell(3).setCellValue("87878787");
+
+        // 给单元格的时间数据设置显示格式
+        HSSFCellStyle cellStyle = workbook.createCellStyle();
+        cellStyle.setDataFormat(creationHelper.createDataFormat().getFormat("yyyy-MM-dd HH:mm:ss"));
+        HSSFCell cell_1_4 = row1.createCell(4);
+        cell_1_4.setCellValue(new Date());
+        cell_1_4.setCellStyle(cellStyle);
+
+        HSSFCell cell_1_5 = row1.createCell(5);
+        cell_1_5.setCellValue(Calendar.getInstance());
+        cell_1_5.setCellStyle(cellStyle);
+
+        row1.createCell(6).setCellType(CellType.ERROR);
 
         String excelFileName = "details.xls";
         try {
@@ -124,7 +144,7 @@ public class ExcelController {
      * @return
      * @throws IOException
      */
-    @RequestMapping("/upload")
+    @RequestMapping("/upload-parse")
     public String uploadExcelFile(MultipartFile file) throws IOException {
         String result = "";
         InputStream stream = file.getInputStream();
@@ -173,5 +193,120 @@ public class ExcelController {
             array.put(jsonObject);
         }
         return array.toString();
+    }
+
+    /**
+     * 导出 xlsx 文件
+     * @param response
+     * @throws IOException
+     */
+    @RequestMapping("/create-xlsx")
+    public void createXlsx(HttpServletResponse response) throws IOException {
+        Workbook workbook = new XSSFWorkbook();
+        addContent(workbook);
+        String excelFileName = "test.xlsx";
+        OutputStream stream = response.getOutputStream();
+        response.reset();
+        response.setHeader("Content-disposition", "attachment; filename=" + excelFileName);
+        response.setContentType("application/msexcel");
+        workbook.write(stream);
+        stream.close();
+    }
+
+    @RequestMapping("/open-xlsx")
+    public String openXlsx(MultipartFile file) throws IOException {
+        InputStream inputStream = file.getInputStream();
+        XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
+        return parseWorkbook(workbook);
+    }
+
+    /**
+     * 解析 Excel 工作簿内容，以json格式返回
+     *
+     * @param workbook
+     * @return
+     */
+    private String parseWorkbook(Workbook workbook) {
+        int sheetNum = workbook.getNumberOfSheets();
+        JSONArray sheetArr = new JSONArray();
+        for (int i = 0; i < sheetNum; i++){
+            Sheet sheet = workbook.getSheetAt(i);
+            String sheetName = workbook.getSheetName(i);
+            JSONObject sheetJson = new JSONObject();
+            sheetJson.put("sheetName",sheetName);
+            JSONArray rowArr = new JSONArray();
+            int rowNum = sheet.getLastRowNum() + 1;
+            for (int j = 0; j < rowNum; j++){
+                Row row = sheet.getRow(j);
+                JSONObject rowJson = new JSONObject();
+                int cellNum = row.getLastCellNum();
+                for (int k = 0; k < cellNum; k++){
+                    Cell cell = row.getCell(k);
+                    if(cell != null) {
+                        CellType cellType = cell.getCellTypeEnum();
+                        switch (cellType) {
+                            case NUMERIC:
+                                rowJson.put("" + (char) (j + 65) + (k + 1), row.getCell(k).getNumericCellValue());
+                                break;
+                            case STRING:
+                                rowJson.put("" + (char) (j + 65) + (k + 1), row.getCell(k).getStringCellValue());
+                                break;
+                            case BOOLEAN:
+                                rowJson.put("" + (char) (j + 65) + (k + 1), row.getCell(k).getBooleanCellValue());
+                                break;
+                            default:
+                                rowJson.put("" + (char) (j + 65) + (k + 1), "");
+                        }
+                    }else {
+                        rowJson.put("" + (char) (j + 65) + (k + 1), "");
+                    }
+                }
+                rowArr.put(rowJson);
+            }
+            sheetJson.put("data",rowArr);
+            sheetArr.put(sheetJson);
+        }
+        return sheetArr.toString();
+    }
+
+    /**
+     * 给 workbook 对象添加内容数据
+     * @param workbook
+     */
+    private void addContent(Workbook workbook){
+        CreationHelper helper = workbook.getCreationHelper();
+        Sheet sheet = workbook.createSheet();
+        Row row_0 = sheet.createRow(0);
+        row_0.createCell(0).setCellValue("Double");
+        row_0.createCell(1).setCellValue("Date");
+        row_0.createCell(2).setCellValue("Calendar");
+        row_0.createCell(3).setCellValue("String");
+        row_0.createCell(4).setCellValue("Boolean");
+        row_0.createCell(5).setCellValue("RichTextString");
+
+        Row row_1 = sheet.createRow(1);
+        Cell cell_1_0 = row_1.createCell(0);
+        Double d = 3.14;
+        cell_1_0.setCellValue(d);
+
+        Cell cell_1_1 = row_1.createCell(1);
+        Date date = new Date();
+        cell_1_1.setCellValue(date);
+
+        Cell cell_1_2 = row_1.createCell(2);
+        Calendar calendar = Calendar.getInstance();
+        cell_1_2.setCellValue(calendar);
+
+        Cell cell_1_3 = row_1.createCell(3);
+        String str = "String";
+        cell_1_3.setCellValue(str);
+
+        Cell cell_1_4 = row_1.createCell(4);
+        boolean b = true;
+        cell_1_4.setCellValue(b);
+
+        Cell cell_1_5 = row_1.createCell(5);
+        RichTextString richTextString = helper.createRichTextString("富文本");
+        cell_1_5.setCellValue(richTextString);
     }
 }
