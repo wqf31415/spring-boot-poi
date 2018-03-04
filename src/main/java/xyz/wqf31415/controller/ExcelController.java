@@ -321,6 +321,11 @@ public class ExcelController {
         cell_1_5.setCellValue(richTextString);
     }
 
+    /**
+     * 创建含有对齐方式的xlsx文件
+     * @param response
+     * @throws IOException
+     */
     @RequestMapping("/create-align")
     public void createAlignedExcel(HttpServletResponse response) throws IOException {
         Workbook workbook = new XSSFWorkbook();
@@ -349,6 +354,37 @@ public class ExcelController {
         cell_0_2.setCellValue("右下");
 
         String excelFileName = "align.xlsx";
+        ServletOutputStream stream = response.getOutputStream();
+        response.reset();
+        response.setHeader("Content-disposition", "attachment; filename=" + excelFileName);
+        response.setContentType("application/msexcel");
+        workbook.write(stream);
+        stream.close();
+    }
+
+    /**
+     * 创建含有边框样式的xls文件
+     * @param response
+     */
+    @RequestMapping("/create-border")
+    public void createXlsWithBorder(HttpServletResponse response) throws IOException {
+        Workbook workbook = new HSSFWorkbook();
+        Sheet sheet = workbook.createSheet("border");
+        Row row = sheet.createRow(1);
+        Cell cell = row.createCell(1);
+        cell.setCellValue("边框");
+        CellStyle cellStyle = workbook.createCellStyle();
+        cellStyle.setBorderTop(BorderStyle.DOUBLE);
+        cellStyle.setTopBorderColor(IndexedColors.BLUE.getIndex());
+        cellStyle.setBorderRight(BorderStyle.DASH_DOT);
+        cellStyle.setRightBorderColor(IndexedColors.RED.getIndex());
+        cellStyle.setBorderBottom(BorderStyle.DOTTED);
+        cellStyle.setBottomBorderColor(IndexedColors.GREEN.getIndex());
+        cellStyle.setBorderLeft(BorderStyle.DASH_DOT_DOT);
+        cellStyle.setLeftBorderColor(IndexedColors.YELLOW.getIndex());
+        cell.setCellStyle(cellStyle);
+
+        String excelFileName = "border.xls";
         ServletOutputStream stream = response.getOutputStream();
         response.reset();
         response.setHeader("Content-disposition", "attachment; filename=" + excelFileName);
