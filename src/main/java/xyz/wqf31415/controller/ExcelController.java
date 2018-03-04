@@ -246,13 +246,24 @@ public class ExcelController {
                         CellType cellType = cell.getCellTypeEnum();
                         switch (cellType) {
                             case NUMERIC:
-                                rowJson.put("" + (char) (j + 65) + (k + 1), row.getCell(k).getNumericCellValue());
+                                // 数字类型数据可能是数字，也可能是日期
+                                if (DateUtil.isCellDateFormatted(cell)){
+                                    rowJson.put("" + (char) (j + 65) + (k + 1), cell.getDateCellValue());
+                                }else {
+                                    rowJson.put("" + (char) (j + 65) + (k + 1), cell.getNumericCellValue());
+                                }
                                 break;
                             case STRING:
-                                rowJson.put("" + (char) (j + 65) + (k + 1), row.getCell(k).getStringCellValue());
+                                rowJson.put("" + (char) (j + 65) + (k + 1), cell.getStringCellValue());
                                 break;
                             case BOOLEAN:
-                                rowJson.put("" + (char) (j + 65) + (k + 1), row.getCell(k).getBooleanCellValue());
+                                rowJson.put("" + (char) (j + 65) + (k + 1), cell.getBooleanCellValue());
+                                break;
+                            case FORMULA:
+                                rowJson.put("" + (char) (j + 65) + (k + 1), cell.getCellFormula());
+                                break;
+                            case BLANK:
+                                rowJson.put("" + (char) (j + 65) + (k + 1), "");
                                 break;
                             default:
                                 rowJson.put("" + (char) (j + 65) + (k + 1), "");
@@ -308,5 +319,41 @@ public class ExcelController {
         Cell cell_1_5 = row_1.createCell(5);
         RichTextString richTextString = helper.createRichTextString("富文本");
         cell_1_5.setCellValue(richTextString);
+    }
+
+    @RequestMapping("/create-align")
+    public void createAlignedExcel(HttpServletResponse response) throws IOException {
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("alignSheet");
+
+        Row row_0 = sheet.createRow(0);
+        Cell cell_0_0 = row_0.createCell(0);
+        CellStyle cellStyle0 = workbook.createCellStyle();
+        cellStyle0.setAlignment(HorizontalAlignment.LEFT);
+        cellStyle0.setVerticalAlignment(VerticalAlignment.TOP);
+        cell_0_0.setCellStyle(cellStyle0);
+        cell_0_0.setCellValue("左上");
+
+        Cell cell_0_1 = row_0.createCell(1);
+        CellStyle cellStyle1 = workbook.createCellStyle();
+        cellStyle1.setAlignment(HorizontalAlignment.CENTER);
+        cellStyle1.setVerticalAlignment(VerticalAlignment.CENTER);
+        cell_0_1.setCellStyle(cellStyle1);
+        cell_0_1.setCellValue("中间");
+
+        Cell cell_0_2 = row_0.createCell(2);
+        CellStyle cellStyle2 = workbook.createCellStyle();
+        cellStyle2.setAlignment(HorizontalAlignment.RIGHT);
+        cellStyle2.setVerticalAlignment(VerticalAlignment.BOTTOM);
+        cell_0_2.setCellStyle(cellStyle2);
+        cell_0_2.setCellValue("右下");
+
+        String excelFileName = "align.xlsx";
+        ServletOutputStream stream = response.getOutputStream();
+        response.reset();
+        response.setHeader("Content-disposition", "attachment; filename=" + excelFileName);
+        response.setContentType("application/msexcel");
+        workbook.write(stream);
+        stream.close();
     }
 }
