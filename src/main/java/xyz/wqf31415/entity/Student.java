@@ -1,14 +1,23 @@
 package xyz.wqf31415.entity;
 
+import xyz.wqf31415.annotation.ExcelExportField;
+
+
 /**
  * Created by Administrator on 2018/2/27.
  *
  * @author WeiQuanfu
  */
-public class Student {
+public class Student extends Human{
+    @ExcelExportField(title = "姓名",order = 1)
     private String name;
+    @ExcelExportField(title = "年龄")
     private Integer age;
+    @ExcelExportField(order = 2,title = "性别")
     private String gender;
+
+    @ExcelExportField(ignore = false)
+    private String password;
 
     public Student() {
     }
@@ -41,6 +50,14 @@ public class Student {
 
     public void setGender(String gender) {
         this.gender = gender;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     @Override
