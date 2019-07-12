@@ -2,6 +2,9 @@ package xyz.wqf31415.entity;
 
 import xyz.wqf31415.annotation.ExcelExportField;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
 
 /**
  * Created by Administrator on 2018/2/27.
@@ -15,9 +18,15 @@ public class Student extends Human{
     private Integer age;
     @ExcelExportField(order = 2,title = "性别")
     private String gender;
+    @ExcelExportField(formatter = "yyyy-MM-dd HH:mm:ss")
+    private ZonedDateTime birth;
 
-    @ExcelExportField(ignore = false)
+    @ExcelExportField(ignore = true)
     private String password;
+
+    private Clazz clazz;
+
+    private List<Lesson> lessons;
 
     public Student() {
     }
@@ -26,6 +35,14 @@ public class Student extends Human{
         this.name = name;
         this.age = age;
         this.gender = gender;
+    }
+
+    public ZonedDateTime getBirth() {
+        return birth;
+    }
+
+    public void setBirth(ZonedDateTime birth) {
+        this.birth = birth;
     }
 
     public String getName() {
@@ -58,6 +75,22 @@ public class Student extends Human{
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Clazz getClazz() {
+        return clazz;
+    }
+
+    public void setClazz(Clazz clazz) {
+        this.clazz = clazz;
+    }
+
+    public List<Lesson> getLessons() {
+        return lessons;
+    }
+
+    public void setLessons(List<Lesson> lessons) {
+        this.lessons = lessons;
     }
 
     @Override

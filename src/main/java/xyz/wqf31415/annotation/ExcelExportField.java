@@ -32,4 +32,10 @@ public @interface ExcelExportField {
      * @return
      */
     boolean ignore() default false;
+
+    /**
+     * 时间格式化
+     * @return
+     */
+    String formatter() default "";
 }
