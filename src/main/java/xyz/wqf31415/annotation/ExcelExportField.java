@@ -38,4 +38,10 @@ public @interface ExcelExportField {
      * @return
      */
     String formatter() default "";
+
+    /**
+     * 默认值
+     * @return
+     */
+    String defaultValue() default "";
 }
